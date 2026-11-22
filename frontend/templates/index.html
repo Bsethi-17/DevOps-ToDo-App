@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevOps Task Manager</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='tasks.css') }}">
+</head>
+<body>
+  <header class="masthead">
+    <div class="wrap brand"><span class="brand-mark" aria-hidden="true">✓</span>DevOps Task Manager</div>
+  </header>
+  <main class="wrap">
+    <div class="page-heading">
+      <h1>My tasks</h1>
+      {% if available %}<p class="count">{{ completed }} of {{ tasks|length }} completed</p>{% endif %}
+    </div>
+    {% if available and tasks %}
+    <progress aria-label="Task completion" value="{{ completed }}" max="{{ tasks|length }}"></progress>
+    {% endif %}
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+    {% if available or draft %}
+    <section class="panel" aria-label="Task list">
+      <form class="add-form" method="post" action="{{ url_for('add_task') }}">
+        <label for="title">New task</label>
+        <div class="add-controls">
+          <input id="title" name="title" required maxlength="200" value="{{ draft }}" placeholder="Enter a task title">
+          <button class="add-button" type="submit">Add task</button>
+        </div>
+      </form>
+      {% if available and tasks %}
+      <ul class="tasks">
+        {% for task in tasks %}
+        <li class="task{% if task.completed %} completed{% endif %}">
+          <form method="post" action="{{ url_for('set_completion', task_id=task.id) }}">
+            <button class="toggle" type="submit" name="completed" value="{{ 'false' if task.completed else 'true' }}"
+                    aria-label="{{ 'Reopen' if task.completed else 'Complete' }} {{ task.title }}">
+              <span class="check" aria-hidden="true">{% if task.completed %}✓{% endif %}</span>
+              <span class="title">{{ task.title }}</span>
+              {% if task.completed %}<span class="sr-only">Completed</span>{% endif %}
+            </button>
+          </form>
+          <form method="post" action="{{ url_for('delete_task', task_id=task.id) }}">
+            <button class="delete" type="submit" aria-label="Delete {{ task.title }}">Delete</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% elif available %}
+      <p class="empty">No tasks yet. Add one to get started.</p>
+      {% endif %}
+    </section>
+    {% endif %}
+    {% if not available %}
+    <a class="retry" href="{{ url_for('index') }}">Refresh tasks</a>
+    {% endif %}
+  </main>
+</body>
+</html>
